@@ -1,0 +1,3 @@
+﻿<Project>
+  <Import Project="..\build\SQLite3.props" />
+</Project>
