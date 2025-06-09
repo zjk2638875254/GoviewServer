@@ -1,6 +1,6 @@
 ﻿using System.Data.SQLite;
 
-namespace SQLite3
+namespace GoViewServer
 {
     public class SearchData
     {

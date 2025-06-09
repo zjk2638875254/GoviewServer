@@ -1,6 +1,6 @@
 ﻿using System.Collections;
 
-namespace SQLite3
+namespace GoViewServer
 {
     public class function_define
     {

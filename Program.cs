@@ -1,11 +1,11 @@
-using Microsoft.AspNetCore.Mvc;
+//using Microsoft.AspNetCore.Mvc;
 using System.Data.SQLite;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.DependencyInjection;
-using SQLite3;
+//using Microsoft.AspNetCore.Builder;
+//using Microsoft.Extensions.DependencyInjection;
+using GoViewServer;
 using System.Text.Json;
-using SQLite3;
 using System.Collections;
+
 
 var builder = WebApplication.CreateBuilder(args);
 builder.WebHost.UseUrls("http://127.0.0.1:3104");
@@ -22,20 +22,17 @@ string db_connectionString = $"Data Source={db_path};Version=3;";
 SQLiteConnection sql_connection = new SQLiteConnection(db_connectionString);
 sql_connection.Open();
 
+
 //文件上传--暂时没有改
 app.MapPost("/goview/oss/object/", async (HttpContext context) =>
 {
     try
     {
-        File.AppendAllText("D://ServerTest//log.txt", "\r\n" + "文件上传://goview//oss/object/");
         // 读取请求体数据（支持JSON/XML/文本等格式）
         using var reader = new StreamReader(context.Request.Body);
         string requestBody = await reader.ReadToEndAsync();
-        File.AppendAllText("D://ServerTest//log.txt", "\r\n" + requestBody);
         // 示例：解析JSON请求体
         var requestData = JsonSerializer.Deserialize<Dictionary<string, object>>(requestBody);
-        File.AppendAllText("D://ServerTest//log.txt", "\r\n" + requestData.ToString());
-        File.AppendAllText("D://ServerTest//log.txt", "\r\n" + "文件上传:End");
         // 构建响应
         var response = new
         {
@@ -110,9 +107,9 @@ app.MapPost("/page/edit", async (HttpContext context) =>
         var requestData = JsonSerializer.Deserialize<List<Dictionary<string, string>>>(requestBody);
 
         ArrayList page_data = new ArrayList();
-        for(int i=0;i< requestData.Count;i++)
+        for (int i = 0; i < requestData.Count; i++)
             page_data.Add(requestData[i]);
-        
+
         if (sqlite_define.pages_edit(sql_connection, page_data) == "success")
         {
             // 设置响应状态码和内容类型
@@ -181,11 +178,11 @@ app.MapPost("/page/create", async (HttpContext context) =>
             project_data["isDelete"] = "-1";
             project_data["indexImage"] = indexImage;
             project_data["remarks"] = remarks;
-            var response = new ProjectResponse { msg = "创建成功", code = 200 ,data = project_data };
+            var response = new ProjectResponse { msg = "创建成功", code = 200, data = project_data };
             // 返回JSON响应
             await context.Response.WriteAsync(JsonSerializer.Serialize(response));
         }
-        
+
     }
     catch (Exception ex)
     {
@@ -205,10 +202,6 @@ app.MapGet("/project/list/", async () =>
 {
     try
     {
-        File.AppendAllText("D://ServerTest//log.txt", "\r\n" + "获取项目list集合:goview/api/goview/project/list/");
-        File.AppendAllText("D://ServerTest//log.txt", "\r\n");
-        File.AppendAllText("D://ServerTest//log.txt", "\r\n" + "获取项目list集合:End");
-
         ArrayList project_list = sqlite_define.get_project_list(sql_connection);
         var response = new ProjectListResponse { msg = "获取成功", code = 200, count = project_list.Count, data = project_list };
         return Results.Ok(response);
@@ -265,7 +258,7 @@ app.MapPost("/page/savedata", async (HttpContext context) =>
         string u_id = requestData["id"].ToString();
         string data = requestData["content"].ToString();
         bool res = sqlite_define.save_page_data(sql_connection, u_id, data);
-        if(res == true)
+        if (res == true)
         {
             await context.Response.WriteAsync(JsonSerializer.Serialize(new
             {

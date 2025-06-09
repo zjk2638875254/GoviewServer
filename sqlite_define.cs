@@ -1,12 +1,11 @@
-﻿using Microsoft.AspNetCore.Http.HttpResults;
+﻿using Microsoft.AspNetCore.Http;
 using System.Collections;
-using System.Collections.Generic;
+//using System.Collections.Generic;
 using System.Data.Entity.Infrastructure;
 using System.Data.SQLite;
 using static System.Net.Mime.MediaTypeNames;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
-namespace SQLite3
+namespace GoViewServer
 {
     public class sqlite_define
     {
@@ -27,9 +26,31 @@ namespace SQLite3
                     {
                         // 获取查询结果（假设project_id是整数类型）
                         string project_name = reader_select.GetString(reader_select.GetOrdinal("project_name"));
+                        sql = "SELECT page_number FROM " + project_name + " WHERE id = '" + page_id + "';";
+                        var command_num = new SQLiteCommand(sql, connection);
+                        SQLiteDataReader reader_num = command_num.ExecuteReader();
+                        string delete_page = reader_select.GetString(reader_select.GetOrdinal("project_name"));
+                        
                         sql = "DELETE FROM " + project_name + " WHERE id = '" + page_id + "'; ";
-                        using var command = new SQLiteCommand(sql, connection);
-                        using var reader = command.ExecuteReader();
+                        var command = new SQLiteCommand(sql, connection);
+                        var reader = command.ExecuteReader();
+
+                        sql = "SELECT id FROM " + project_name + " WHERE page_number > '" + delete_page + "';";
+                        command = new SQLiteCommand(sql, connection);
+                        reader = command.ExecuteReader();
+                        HashSet<string> page_ids = new HashSet<string> { };
+                        while(reader.Read())
+                        {
+                            string select_page_id = reader.GetString(reader.GetOrdinal("id"));
+                            page_ids.Add(select_page_id);
+                        }
+                        foreach(string id in page_ids)
+                        {
+                            //UPDATE project SET page_number = id + 1 WHERE id = 6;
+                            sql = "UPDATE " + project_name + " SET page_number = '" + (Convert.ToInt32(id) + 1).ToString() + "' WHERE id = '" + id + "'; ";
+                            command = new SQLiteCommand(sql, connection);
+                            reader = command.ExecuteReader();
+                        }
                         return "success";
                     }
                     else

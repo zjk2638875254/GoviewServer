@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("SQLite3")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+2b436f1718f9aaf29dd271a60c3abec9a5beff2a")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+df5914f24bec4db9d12ad125ee42da70be9fe807")]
 [assembly: System.Reflection.AssemblyProductAttribute("SQLite3")]
 [assembly: System.Reflection.AssemblyTitleAttribute("SQLite3")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
