@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "ct0F/KOaB44=",
+  "dgSpecHash": "l/J35PdGjfE=",
   "success": true,
-  "projectFilePath": "D:\\2025工作\\科技项目\\V1.0\\源代码\\GoviewServer\\GoViewServer.csproj",
+  "projectFilePath": "D:\\2025工作\\科技项目\\CesiumForm\\GoviewServer\\GoViewServer.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\dell\\.nuget\\packages\\entityframework\\6.4.4\\entityframework.6.4.4.nupkg.sha512",
     "C:\\Users\\dell\\.nuget\\packages\\microsoft.csharp\\4.7.0\\microsoft.csharp.4.7.0.nupkg.sha512",

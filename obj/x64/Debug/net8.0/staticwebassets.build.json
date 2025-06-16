@@ -1,0 +1,12 @@
+{
+  "Version": 1,
+  "Hash": "4VgK1CVIks4Zl9IbxxVcpq/HuqnOJ02m7XY9EQEYyfE=",
+  "Source": "GoViewServer",
+  "BasePath": "_content/GoViewServer",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": [],
+  "Endpoints": []
+}

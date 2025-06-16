@@ -1,8 +1,11 @@
 ﻿using Microsoft.AspNetCore.Http;
 using System.Collections;
+using System.Collections.Generic;
+
 //using System.Collections.Generic;
 using System.Data.Entity.Infrastructure;
 using System.Data.SQLite;
+using System.Transactions;
 using static System.Net.Mime.MediaTypeNames;
 
 namespace GoViewServer
@@ -18,46 +21,76 @@ namespace GoViewServer
         {
             try
             {
-                string sql = "SELECT project_name FROM project_list WHERE page_id = '" + page_id + "';";
-                using var command_select = new SQLiteCommand(sql, connection);
-                using (SQLiteDataReader reader_select = command_select.ExecuteReader())
-                {
-                    if (reader_select.Read())
-                    {
-                        // 获取查询结果（假设project_id是整数类型）
-                        string project_name = reader_select.GetString(reader_select.GetOrdinal("project_name"));
-                        sql = "SELECT page_number FROM " + project_name + " WHERE id = '" + page_id + "';";
-                        var command_num = new SQLiteCommand(sql, connection);
-                        SQLiteDataReader reader_num = command_num.ExecuteReader();
-                        string delete_page = reader_select.GetString(reader_select.GetOrdinal("project_name"));
-                        
-                        sql = "DELETE FROM " + project_name + " WHERE id = '" + page_id + "'; ";
-                        var command = new SQLiteCommand(sql, connection);
-                        var reader = command.ExecuteReader();
+                string projectNameResult = null;
+                string pageNumberResult = null;
+                string queryPageNumber = "SELECT project_name FROM project_list WHERE page_id = @id";
 
-                        sql = "SELECT id FROM " + project_name + " WHERE page_number > '" + delete_page + "';";
-                        command = new SQLiteCommand(sql, connection);
-                        reader = command.ExecuteReader();
-                        HashSet<string> page_ids = new HashSet<string> { };
-                        while(reader.Read())
-                        {
-                            string select_page_id = reader.GetString(reader.GetOrdinal("id"));
-                            page_ids.Add(select_page_id);
-                        }
-                        foreach(string id in page_ids)
-                        {
-                            //UPDATE project SET page_number = id + 1 WHERE id = 6;
-                            sql = "UPDATE " + project_name + " SET page_number = '" + (Convert.ToInt32(id) + 1).ToString() + "' WHERE id = '" + id + "'; ";
-                            command = new SQLiteCommand(sql, connection);
-                            reader = command.ExecuteReader();
-                        }
-                        return "success";
-                    }
-                    else
+                using (SQLiteCommand cmdPageNumber = new SQLiteCommand(queryPageNumber, connection))
+                {
+                    cmdPageNumber.Parameters.AddWithValue("@id", page_id);
+
+                    using (SQLiteDataReader reader = cmdPageNumber.ExecuteReader())
                     {
-                        return "";
+                        if (reader.Read())
+                        {
+                            // 获取值并转换为string（虽然SQLite返回的本来就是string类型）
+                            projectNameResult = reader["project_name"].ToString();
+                            //Console.WriteLine($"[page_number表] 找到记录：project_name = {projectNameResult}");
+                        }
+                        else
+                        {
+                            //Console.WriteLine($"[page_number表] 未找到ID为 {page_id} 的记录");
+                        }
                     }
                 }
+
+                // 第二个查询：从project_name表获取page_number
+                string queryProjectName = "SELECT page_number FROM '" + projectNameResult + "' WHERE page_id = @id";
+
+                using (SQLiteCommand cmdProjectName = new SQLiteCommand(queryProjectName, connection))
+                {
+                    cmdProjectName.Parameters.AddWithValue("@id", page_id);
+
+                    using (SQLiteDataReader reader = cmdProjectName.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            // 获取值并转换为string
+                            pageNumberResult = reader["page_number"].ToString();
+                            //Console.WriteLine($"[project_name表] 找到记录：page_number = {pageNumberResult}");
+                        }
+                        else
+                        {
+                            //Console.WriteLine($"[project_name表] 未找到ID为 {page_id} 的记录");
+                        }
+                    }
+                }
+
+                SQLiteTransaction transaction = connection.BeginTransaction();
+
+                // 3. 删除project_name表中的记录
+                string deleteQuery = "DELETE FROM '" + projectNameResult + "' WHERE page_id = @id";
+                using (SQLiteCommand cmd = new SQLiteCommand(deleteQuery, connection, transaction))
+                {
+                    cmd.Parameters.AddWithValue("@id", page_id);
+                    int rowsAffected = cmd.ExecuteNonQuery();
+                    //Console.WriteLine($"已删除 {rowsAffected} 条记录");
+                }
+
+                // 4. 更新page_number表中大于limit的值
+                string updateQuery = "UPDATE '" + projectNameResult + "' SET page_number = page_number - 1 WHERE page_number > @limit";
+                using (SQLiteCommand cmd = new SQLiteCommand(updateQuery, connection, transaction))
+                {
+                    cmd.Parameters.AddWithValue("@limit", pageNumberResult);
+                    int rowsAffected = cmd.ExecuteNonQuery();
+                    //Console.WriteLine($"已更新 {rowsAffected} 条记录");
+                }
+
+                transaction.Commit();
+                //Console.WriteLine("事务已提交");
+
+
+                return "success";
             }
             catch (Exception ex)
             {
@@ -72,8 +105,8 @@ namespace GoViewServer
                 for (int i = 0; i < pages_data.Count; i++)
                 {
                     Dictionary<string, string> single_page = (Dictionary<string, string>)pages_data[i];
-                    string page_id = single_page["id"].ToString();
-                    string indexImage = single_page["index_image"].ToString();
+                    string page_id = single_page["page_id"].ToString();
+                    string indexImage = single_page["indexImage"].ToString();
                     string page_name = single_page["page_name"].ToString();
                     string remarks = single_page["remarks"].ToString();
                     string page_number = single_page["page_number"].ToString();
@@ -86,7 +119,7 @@ namespace GoViewServer
                         {
                             // 获取查询结果（假设project_id是整数类型）
                             string project_name = reader_select.GetString(reader_select.GetOrdinal("project_name"));
-                            string query = "UPDATE " + project_name + " SET indexImage = '" + indexImage + "', page_name = '" + page_name + "', remarks = '" + remarks + "', page_number = '" + page_number + "' WHERE id = '" + page_id + "'; ";
+                            string query = "UPDATE " + project_name + " SET indexImage = '" + indexImage + "', page_name = '" + page_name + "', remarks = '" + remarks + "', page_number = '" + page_number + "' WHERE page_id = '" + page_id + "'; ";
                             using var command = new SQLiteCommand(query, connection);
                             using var reader = command.ExecuteReader();
                         }
@@ -100,6 +133,7 @@ namespace GoViewServer
             }
             catch (Exception ex)
             {
+                Console.WriteLine(ex.ToString());
                 return ex.ToString();
             }
         }
@@ -117,7 +151,7 @@ namespace GoViewServer
                     {
                         // 获取查询结果
                         string project_name = reader_select.GetString(reader_select.GetOrdinal("project_name"));
-                        string query = "INSERT INTO " + project_name + " (id, indexImage, page_name, remarks, createTime, page_number) VALUES ('" + page_id + "' , '" + index_image + "' , '" + page_name + "' , '" + remarks + "' , '" + createTime + "','" + page_number + "');";
+                        string query = "INSERT INTO " + project_name + " (page_id, indexImage, page_name, remarks, createTime, page_number) VALUES ('" + page_id + "' , '" + index_image + "' , '" + page_name + "' , '" + remarks + "' , '" + createTime + "','" + page_number + "');";
                         SQLiteCommand command1 = new SQLiteCommand(query, connection);
                         command1.ExecuteReader();
 
@@ -134,6 +168,7 @@ namespace GoViewServer
             }
             catch (Exception ex)
             {
+                Console.WriteLine(ex.ToString());
                 return ex.ToString();
             }
         }
@@ -188,7 +223,7 @@ namespace GoViewServer
                             {
                                 // 创建字典并填充数据
                                 Dictionary<string, object> page_dict = new Dictionary<string, object>();
-                                page_dict["id"] = reader["id"].ToString();
+                                page_dict["page_id"] = reader["page_id"].ToString();
                                 page_dict["index_image"] = reader["indexImage"].ToString();
                                 page_dict["page_name"] = reader["page_name"].ToString();
                                 page_dict["remarks"] = reader["remarks"].ToString();
@@ -219,7 +254,7 @@ namespace GoViewServer
                     if (reader.Read())
                     {
                         string project_name = reader["project_name"].ToString();
-                        query = "SELECT data FROM " + project_name + " WHERE id = '" + page_id + "';";
+                        query = "SELECT data FROM " + project_name + " WHERE page_id = '" + page_id + "';";
                         using (SQLiteCommand cmd_final = new SQLiteCommand(query, connection))
                         using (SQLiteDataReader reader_final = cmd_final.ExecuteReader())
                         {
@@ -251,7 +286,7 @@ namespace GoViewServer
                     if (reader.Read())
                     {
                         string project_name = reader["project_name"].ToString();
-                        query = "UPDATE " + project_name + " SET data = '" + data + "' WHERE id = '" + page_id + "';";
+                        query = "UPDATE " + project_name + " SET data = '" + data + "' WHERE page_id = '" + page_id + "';";
                         using (SQLiteCommand cmd_final = new SQLiteCommand(query, connection))
                         {
                             cmd_final.ExecuteReader();

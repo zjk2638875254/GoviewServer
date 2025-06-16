@@ -5,6 +5,8 @@ using System.Data.SQLite;
 using GoViewServer;
 using System.Text.Json;
 using System.Collections;
+using System.Security.Cryptography.X509Certificates;
+using System;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -13,9 +15,6 @@ builder.WebHost.UseUrls("http://127.0.0.1:3104");
 var app = builder.Build();
 
 string currentDir = Directory.GetCurrentDirectory();
-//DirectoryInfo dirInfo = new DirectoryInfo(currentDir);
-//string parentDir = dirInfo.Parent?.FullName;
-//string db_path = parentDir + "\\data_base\\go_view.db3";
 string db_path = currentDir + "\\data_base\\go_view.db3";
 Console.WriteLine(db_path);
 string db_connectionString = $"Data Source={db_path};Version=3;";
@@ -66,34 +65,24 @@ app.MapPost("/goview/oss/object/", async (HttpContext context) =>
         }));
     }
 });
-//未修改：删除项目
-app.MapGet("/project/delete/{item}", async (string item) =>
-{
-    try
-    {
-        var requestData = JsonSerializer.Deserialize<Dictionary<string, object>>(item);
 
-        sqlite_define.page_delete(sql_connection, item);
-        var response = new ApiResponse { Msg = "操作成功", Code = 200 };
-        return Results.Ok(response);
-    }
-    catch (Exception ex)
-    {
-        return Results.Problem($"Database error: {ex.Message}");
-    }
-});
 //已修改：删除页面
 app.MapGet("/page/delete/{item}", async (string item) =>
 {
     try
     {
-        sqlite_define.page_delete(sql_connection, item);
-        var response = new ApiResponse { Msg = "操作成功", Code = 200 };
-        return Results.Ok(response);
+        if(sqlite_define.page_delete(sql_connection, item) != "success")
+        {
+            var response_error = new MessageResponse { Msg = "删除失败，sqlite_define.page_delete 执行失败， 请检查是否存在页面id", Code = 401 };
+            return Results.Ok(response_error);
+        }
+        var response_success = new MessageResponse { Msg = "操作成功", Code = 200 };
+        return Results.Ok(response_success);
     }
     catch (Exception ex)
     {
-        return Results.Problem($"Database error: {ex.Message}");
+        var response = new MessageResponse { Msg = "Wrong with server:" + ex.Message, Code = 501 };
+        return Results.BadRequest(response);
     }
 });
 //已修改：修改页面-已测试
@@ -115,31 +104,23 @@ app.MapPost("/page/edit", async (HttpContext context) =>
             // 设置响应状态码和内容类型
             context.Response.StatusCode = StatusCodes.Status200OK;
             context.Response.ContentType = "application/json";
-            var response = new ApiResponse { Msg = "操作成功", Code = 200 };
+            var response = new MessageResponse { Msg = "已完成修改", Code = 200 };
             // 返回JSON响应
-            await context.Response.WriteAsync(JsonSerializer.Serialize(response));
+            return Results.Ok(response);
         }
         else
         {
-            // 设置响应状态码和内容类型
-            context.Response.StatusCode = StatusCodes.Status200OK;
-            context.Response.ContentType = "application/json";
-            var response = new ApiResponse { Msg = "操作失败", Code = 200 };
+            var response = new MessageResponse { Msg = "操作失败，sqlite_define.pages_edit 执行失败， 请检查是否存在页面id", Code = 401 };
             // 返回JSON响应
-            await context.Response.WriteAsync(JsonSerializer.Serialize(response));
+            return Results.BadRequest(response);
         }
     }
     catch (Exception ex)
     {
         // 统一错误处理
         Console.WriteLine($"处理请求时发生错误：{ex.ToString()}");
-        context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-        await context.Response.WriteAsync(JsonSerializer.Serialize(new
-        {
-            Status = "Error",
-            Message = "服务器处理请求时发生错误",
-            Details = ex.Message
-        }));
+        var response = new MessageResponse { Msg = "Wrong with server:" + ex.Message, Code = 501 };
+        return Results.BadRequest(response);
     }
 });
 //已修改：创建页面-已测试
@@ -178,23 +159,24 @@ app.MapPost("/page/create", async (HttpContext context) =>
             project_data["isDelete"] = "-1";
             project_data["indexImage"] = indexImage;
             project_data["remarks"] = remarks;
-            var response = new ProjectResponse { msg = "创建成功", code = 200, data = project_data };
+
+            var response = new CommonResponse { Msg = "创建成功", Code = 200, Count = project_data.Count(), Data = project_data };
             // 返回JSON响应
-            await context.Response.WriteAsync(JsonSerializer.Serialize(response));
+            return Results.Ok(response);
+        }
+        else
+        {
+            var response = new MessageResponse { Msg = "操作失败，sqlite_define.page_create 执行失败，请检查是否存在页面id", Code = 401 };
+            // 返回JSON响应
+            return Results.BadRequest(response);
         }
 
     }
     catch (Exception ex)
     {
-        // 统一错误处理
         Console.WriteLine($"处理请求时发生错误：{ex.ToString()}");
-        context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-        await context.Response.WriteAsync(JsonSerializer.Serialize(new
-        {
-            Status = "Error",
-            Message = "服务器处理请求时发生错误",
-            Details = ex.Message
-        }));
+        var response = new MessageResponse { Msg = "Wrong with server:" + ex.Message, Code = 501 };
+        return Results.BadRequest(response);
     }
 });
 //已修改：获取项目list集合-已测试
@@ -203,12 +185,15 @@ app.MapGet("/project/list/", async () =>
     try
     {
         ArrayList project_list = sqlite_define.get_project_list(sql_connection);
-        var response = new ProjectListResponse { msg = "获取成功", code = 200, count = project_list.Count, data = project_list };
+
+        var response = new CommonResponse { Msg = "获取成功", Code = 200, Count = project_list.Count, Data = project_list };
         return Results.Ok(response);
     }
     catch (Exception ex)
     {
-        return Results.Problem($"Database error: {ex.Message}");
+        Console.WriteLine($"处理请求时发生错误：{ex.ToString()}");
+        var response = new MessageResponse { Msg = "Wrong with server:" + ex.Message, Code = 501 };
+        return Results.BadRequest(response);
     }
 });
 //已修改：获取页面list集合-以测试
@@ -220,13 +205,14 @@ app.MapGet("/page/list/{item}", async (string item) =>
         ArrayList page_data = sqlite_define.get_page_list(sql_connection, project_id);
         ArrayList sorted_pages = function_define.sort_arraylist(page_data);
 
-        var response = new ProjectListResponse { msg = "获取成功", code = 200, count = page_data.Count, data = sorted_pages };
+        var response = new CommonResponse { Msg = "获取成功", Code = 200, Count = page_data.Count, Data = sorted_pages };
 
         return Results.Ok(response);
     }
     catch (Exception ex)
     {
-        return Results.Problem($"Database error: {ex.Message}");
+        var response = new MessageResponse { Msg = "Wrong with server:" + ex.Message, Code = 501 };
+        return Results.BadRequest(response);
     }
 });
 //已修改：获取页面数据-已测试
@@ -236,12 +222,14 @@ app.MapGet("/page/getData/{item}", async (string item) =>
     {
         string page_id = item;
         string project_data = sqlite_define.get_page_data(sql_connection, item);
-        var response = new ProjectDataResponse { msg = "获取成功", code = 200, data = project_data };
+
+        var response = new CommonResponse { Msg = "获取成功", Code = 200, Count = project_data.Length, Data = project_data };
         return Results.Ok(response);
     }
     catch (Exception ex)
     {
-        return Results.Problem($"Database error: {ex.Message}");
+        var response = new MessageResponse { Msg = "Wrong with server:" + ex.Message, Code = 501 };
+        return Results.BadRequest(response);
     }
 });
 //已修改：保存页面数据-已测试
@@ -255,68 +243,40 @@ app.MapPost("/page/savedata", async (HttpContext context) =>
         // 示例：解析JSON请求体
         var requestData = JsonSerializer.Deserialize<Dictionary<string, object>>(requestBody);
 
-        string u_id = requestData["id"].ToString();
+        string u_id = requestData["page_id"].ToString();
         string data = requestData["content"].ToString();
         bool res = sqlite_define.save_page_data(sql_connection, u_id, data);
         if (res == true)
         {
-            await context.Response.WriteAsync(JsonSerializer.Serialize(new
-            {
-                msg = "创建成功",
-                code = 200,
-                data = data
-            }));
+
+            var response = new MessageResponse { Msg = "保存成功", Code = 200 };
+            return Results.Ok(response);
         }
         else
         {
-            await context.Response.WriteAsync(JsonSerializer.Serialize(new
-            {
-                msg = "创建不成功",
-                code = 201,
-                data = data
-            }));
+            var response = new MessageResponse { Msg = "保存失败:Wrong in /page/savedata, sqlite_define.save_page_data 返回值为 false", Code = 401 };
+            return Results.BadRequest(response);
         }
     }
     catch (Exception ex)
     {
-        // 统一错误处理
-        Console.WriteLine($"处理请求时发生错误：{ex.ToString()}");
-        context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-        await context.Response.WriteAsync(JsonSerializer.Serialize(new
-        {
-            Status = "Error",
-            Message = "服务器处理请求时发生错误",
-            Details = ex.Message
-        }));
+        var response = new MessageResponse { Msg = "Wrong with server:" + ex.Message, Code = 501 };
+        return Results.BadRequest(response);
     }
 });
 
 app.Run();
 
-public class ApiResponse
+public class MessageResponse
 {
     public string Msg { get; set; }
     public int Code { get; set; }
 }
 
-public class ProjectResponse
+public class CommonResponse : MessageResponse
 {
-    public string msg { get; set; }
-    public int code { get; set; } 
-    public Dictionary<string, string> data { get; set; }
-}
-
-public class ProjectListResponse
-{
-    public string msg { get; set; }
-    public int code { get; set; }
-    public int count { get; set; }
-    public ArrayList data { get; set; }
-}
-
-public class ProjectDataResponse
-{
-    public string msg { get; set; }
-    public int code { get; set; }
-    public string data { get; set; }
+    public string Msg { get; set; }
+    public int Code { get; set; }
+    public int Count { get; set; }
+    public object Data { get; set; }
 }

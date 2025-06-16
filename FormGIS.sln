@@ -1,0 +1,47 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35931.197
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GoViewServer", "GoViewServer.csproj", "{66FD1D82-3159-4BF9-995D-337E11B052B7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CesiumForm", "..\CesiumForm_net8.0\CesiumForm.csproj", "{EEA63604-590F-9A32-9D6C-62567B37C014}"
+EndProject
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "Setup", "..\Setup\Setup.vdproj", "{4D1AC582-8087-5490-FCC2-03CEC5D22547}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
+		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{66FD1D82-3159-4BF9-995D-337E11B052B7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{66FD1D82-3159-4BF9-995D-337E11B052B7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{66FD1D82-3159-4BF9-995D-337E11B052B7}.Debug|x64.ActiveCfg = Debug|x64
+		{66FD1D82-3159-4BF9-995D-337E11B052B7}.Debug|x64.Build.0 = Debug|x64
+		{66FD1D82-3159-4BF9-995D-337E11B052B7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{66FD1D82-3159-4BF9-995D-337E11B052B7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{66FD1D82-3159-4BF9-995D-337E11B052B7}.Release|x64.ActiveCfg = Release|x64
+		{66FD1D82-3159-4BF9-995D-337E11B052B7}.Release|x64.Build.0 = Release|x64
+		{EEA63604-590F-9A32-9D6C-62567B37C014}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EEA63604-590F-9A32-9D6C-62567B37C014}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EEA63604-590F-9A32-9D6C-62567B37C014}.Debug|x64.ActiveCfg = Debug|x64
+		{EEA63604-590F-9A32-9D6C-62567B37C014}.Debug|x64.Build.0 = Debug|x64
+		{EEA63604-590F-9A32-9D6C-62567B37C014}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EEA63604-590F-9A32-9D6C-62567B37C014}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EEA63604-590F-9A32-9D6C-62567B37C014}.Release|x64.ActiveCfg = Release|x64
+		{EEA63604-590F-9A32-9D6C-62567B37C014}.Release|x64.Build.0 = Release|x64
+		{4D1AC582-8087-5490-FCC2-03CEC5D22547}.Debug|Any CPU.ActiveCfg = Debug
+		{4D1AC582-8087-5490-FCC2-03CEC5D22547}.Debug|x64.ActiveCfg = Debug
+		{4D1AC582-8087-5490-FCC2-03CEC5D22547}.Release|Any CPU.ActiveCfg = Release
+		{4D1AC582-8087-5490-FCC2-03CEC5D22547}.Release|x64.ActiveCfg = Release
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {9901A2CC-4016-4A94-9D3B-B2B23D37F243}
+	EndGlobalSection
+EndGlobal

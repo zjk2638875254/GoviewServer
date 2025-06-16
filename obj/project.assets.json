@@ -1222,11 +1222,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\2025工作\\科技项目\\V1.0\\源代码\\GoviewServer\\GoViewServer.csproj",
+      "projectUniqueName": "D:\\2025工作\\科技项目\\CesiumForm\\GoviewServer\\GoViewServer.csproj",
       "projectName": "GoViewServer",
-      "projectPath": "D:\\2025工作\\科技项目\\V1.0\\源代码\\GoviewServer\\GoViewServer.csproj",
+      "projectPath": "D:\\2025工作\\科技项目\\CesiumForm\\GoviewServer\\GoViewServer.csproj",
       "packagesPath": "C:\\Users\\dell\\.nuget\\packages\\",
-      "outputPath": "D:\\2025工作\\科技项目\\V1.0\\源代码\\GoviewServer\\obj\\",
+      "outputPath": "D:\\2025工作\\科技项目\\CesiumForm\\GoviewServer\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "D:\\VS2017-SDK\\NuGetPackages",
